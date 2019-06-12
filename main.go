@@ -12,6 +12,7 @@ import (
 	"log"
 	"time"
 	"strconv"
+	"os"
 )
 
 /**
@@ -28,9 +29,7 @@ func usage() string {
 
       Usage:
         ./qdawslogs [-logGroupName xxx] [-field xx]* -filter FILTER_CLAUSE or -messageFilter [-startTime epoch/RFC3339] [-endTime epoch/RFC3339] [-limit xxx] [-region xxx]
-      Example:
-		./qdawslogs -logGroupName /aws/ecs/stage-rt -field @timestamp -field @message -filter "@message like /xxx/" -startTime #### -endTime #### -limit 1000
- 
+
       Required:  -filter or -messageFilter. 
 
                  Filter must be a complete filter clause.  See https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html
@@ -46,6 +45,32 @@ func usage() string {
         field = @timestamp, @message, @logStream
         startTime = 1hour before now
         endTime = now
+
+
+      -------------------
+      Example:
+
+        [1]  Getting fields timestamp, message from the log group /aws/ecs/stage-rt within the previous hour of the given epoch time: 
+
+		       ./qdawslogs -logGroupName /aws/ecs/stage-rt -field @timestamp -field @message -filter "@message like /19062412_5Xi2eYcEc6/" -endTime 1560322977 -limit 1000
+      
+
+
+
+        [2] Getting default fields (timestamp, message, logStream) from the default log group /aws/ecs/prod-rt with startTime 2019-06-12T06:47:12.000Z, filtering 
+            messages containing 19062412_5Xi2eYcEc6:
+
+		        ./qdawslogs.mac -startTime "2019-06-12T06:47:12.000Z" -messageFilter 19062412_5Xi2eYcEc6
+
+
+
+
+        [3] Getting default fields (timestamp, message, logStream) from the default log group /aws/ecs/prod-rt with startTime 2019-06-12T06:47:12.000Z, filtering 
+            messages containing 19062412_5Xi2eYcEc6 AND logStream contains "coord":
+
+                ./qdawslogs.mac -startTime "2019-06-12T06:47:12.000Z" -messageFilter 19062412_5Xi2eYcEc6 -filter "@logStream like /coord/"
+ 
+
 `
 }
 
@@ -163,7 +188,8 @@ func parseArguments() (input cloudwatchlogs.StartQueryInput, region string) {
 		fields = append([]string{}, fieldArgs.Args()...)
 		filters = append([]string{}, filterArgs.Args()...)
 	} else {
-		log.Fatal(usage())
+		fmt.Println(usage())
+		os.Exit(1)
 	}
 
 	if len(fields) == 0 {
