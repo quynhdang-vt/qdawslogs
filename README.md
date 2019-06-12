@@ -95,6 +95,11 @@ OR
 ```
 
 
+OR
+
+```
+./qdawslogs.mac -startTime "2019-06-12T06:47:12.000Z" -messageFilter 19062412_5Xi2eYcEc6 -filter "@logStream like /DeepAffects/" > samples/DeepAffects-19062412_5Xi2eYcEc6.log 2>&1
+```
 
 ### Sample outputs
 
