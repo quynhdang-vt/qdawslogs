@@ -98,3 +98,4 @@ OR
 
 ### Sample outputs
 
+See https://github.com/quynhdang-vt/qdawslogs/tree/master/samples for the above sample outputs
