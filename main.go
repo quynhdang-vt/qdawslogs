@@ -11,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"log"
 	"time"
+	"strconv"
 )
 
 /**
@@ -26,7 +27,7 @@ func usage() string {
 	return `
 
       Usage:
-        ./qdawslogs [-logGroupName xxx] [-field xx]* -filter FILTER_CLAUSE or -messageFilter [-startTime epoch] [-endTime epoch] [-limit xxx] [-region xxx]
+        ./qdawslogs [-logGroupName xxx] [-field xx]* -filter FILTER_CLAUSE or -messageFilter [-startTime epoch/RFC3339] [-endTime epoch/RFC3339] [-limit xxx] [-region xxx]
       Example:
 		./qdawslogs -logGroupName /aws/ecs/stage-rt -field @timestamp -field @message -filter "@message like /xxx/" -startTime #### -endTime #### -limit 1000
  
@@ -37,6 +38,8 @@ func usage() string {
 
       -field is optional.  Can be specified multiple times.  When specified, it should be one of the following:  @timestamp, @message, @logStream or @ingestionTime
 
+      -startTime/-endTime can be either an integer for the epoch time in seconds or RFC 3339 format (which is the case of graphQL datetime value
+
       Optional with provided values:
         logGroupName = /aws/ecs/prod-rt
         region=us-east-1
@@ -44,6 +47,17 @@ func usage() string {
         startTime = 1hour before now
         endTime = now
 `
+}
+
+func getTimestampFromRFC3339(tString string) int64 {
+	if tString == "" {
+		return 0
+	}
+	res, err := time.Parse(time.RFC3339, tString)
+	if err == nil {
+		return res.Unix()
+	}
+	return 0
 }
 
 func main() {
@@ -64,17 +78,18 @@ func main() {
 
 	done := false
 	for !done {
+		time.Sleep(5 * time.Second)
 		getQueryResultsOutput, err := cwLogs.GetQueryResults(&getQueryResultsInput)
+
+		log.Printf(">>>>>> GetQueryResults= %d records, statuse=%s, stats=%s\n", len(getQueryResultsOutput.Results),
+			ToString(getQueryResultsOutput.Statistics),  *getQueryResultsOutput.Status)
+		fmt.Println("----------------")
 		if err != nil {
 			log.Printf("GetQueryResults got err=%v\n", err)
 			done = true
 		} else {
 
 			switch *getQueryResultsOutput.Status {
-			case "Running":
-				fallthrough
-			case "Scheduled":
-				time.Sleep(5 * time.Second)
 			case "Complete":
 				done = true
 				fallthrough
@@ -87,11 +102,12 @@ func main() {
 						buf.WriteString(*fields.Value)
 						buf.WriteString(", ")
 					}
-					log.Printf("%s\n", buf.String())
+					fmt.Printf("%s\n\n", buf.String())
 				}
 
 			}
 		}
+
 	}
 }
 
@@ -119,12 +135,16 @@ func parseArguments() (input cloudwatchlogs.StartQueryInput, region string) {
 	var messageFilter string
 	var fields []string
 	var filters []string
-	var startTime int64
-	var endTime int64
+	var startTime int
+	var endTime int
+
 	var limit int64
 	var argRegion string
 
 	var fieldArgs, filterArgs flagArgs
+
+	var argStartTime string
+	var argEndTime string
 
 	flag.StringVar(&logGroupName, "logGroupName", "/aws/ecs/prod-rt", "specify log group name")
 	flag.StringVar(&argRegion, "region", "us-east-1", "specify AWS region")
@@ -132,8 +152,8 @@ func parseArguments() (input cloudwatchlogs.StartQueryInput, region string) {
 	flag.Var(&fieldArgs, "field", "return field names, ampersand is required, e.g. @timestamp, @message")
 	flag.Var(&filterArgs, "filter", "filters, e.g. \"@message like /xxx/\"")
 
-	flag.Int64Var(&startTime, "startTime", 0, "specify startTime (epoch in sec) for query scope")
-	flag.Int64Var(&endTime, "endTime", 0, "specify endTime (epoch in sec) for query scope")
+	flag.StringVar(&argStartTime, "startTime", "", "specify startTime (epoch in sec) for query scope")
+	flag.StringVar(&argEndTime, "endTime", "", "specify endTime (epoch in sec) for query scope")
 	flag.Int64Var(&limit, "limit", 0, "specify limit (epoch in sec) for query scope")
 	flag.StringVar(&messageFilter, "messageFilter", "", "filter for @message, the vaue for like op to the @message field, typically jobId or taskId")
 
@@ -177,13 +197,30 @@ func parseArguments() (input cloudwatchlogs.StartQueryInput, region string) {
 		filters = append(filters, fmt.Sprintf("@message like /%s/", messageFilter))
 	}
 
-	if endTime == 0 {
-		endTime = time.Now().Unix()
+	var err error
+	if argEndTime!="" {
+		endTime, err = strconv.Atoi(argEndTime)
+		if err != nil {
+			endTime = int(getTimestampFromRFC3339(argEndTime))
+		}
 	}
-	// an hour from endTime
+
+	if endTime == 0 {
+		endTime = int(time.Now().Unix())
+	}
+
+	if argStartTime!="" {
+		startTime, err = strconv.Atoi(argStartTime)
+		if err != nil {
+			startTime = int(getTimestampFromRFC3339(argStartTime))
+		}
+	}
+
+	// an hour from endTime if not given
 	if startTime == 0 {
 		startTime = endTime - 3600
 	}
+
 	var str strings.Builder
 
 	str.WriteString("fields ")
@@ -199,14 +236,14 @@ func parseArguments() (input cloudwatchlogs.StartQueryInput, region string) {
 	}
 	input = cloudwatchlogs.StartQueryInput{}
 	input.SetLogGroupName(logGroupName)
-	input.SetStartTime(startTime)
-	input.SetEndTime(endTime)
+	input.SetStartTime(int64(startTime))
+	input.SetEndTime(int64(endTime))
 	if limit > 0 {
 		input.SetLimit(limit)
 	}
 	input.SetQueryString(str.String())
 	log.Printf("StartQueryInput=%s\n", input.String())
-	err := input.Validate()
+	err = input.Validate()
 	if err != nil {
 		log.Fatalf("\n\nERROR in formulating CloudWatch StartQueryInput, err=%v", err)
 	}
