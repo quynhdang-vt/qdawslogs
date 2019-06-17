@@ -106,7 +106,7 @@ func main() {
 		time.Sleep(5 * time.Second)
 		getQueryResultsOutput, err := cwLogs.GetQueryResults(&getQueryResultsInput)
 
-		log.Printf(">>>>>> GetQueryResults= %d records, statuse=%s, stats=%s\n", len(getQueryResultsOutput.Results),
+		log.Printf(">>>>>> GetQueryResults= %d records, stats=%s, status=%s\n", len(getQueryResultsOutput.Results),
 			ToString(getQueryResultsOutput.Statistics),  *getQueryResultsOutput.Status)
 		fmt.Println("----------------")
 		if err != nil {
@@ -122,6 +122,9 @@ func main() {
 				for _, fieldResults := range getQueryResultsOutput.Results {
 					var buf strings.Builder
 					for _, fields := range fieldResults {
+						if strings.Contains(*fields.Field, "@ptr") {
+							continue
+						}
 						buf.WriteString(*fields.Field)
 						buf.WriteString("=")
 						buf.WriteString(*fields.Value)
