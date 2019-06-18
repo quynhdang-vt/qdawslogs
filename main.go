@@ -10,15 +10,15 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatchlogs"
 	"log"
-	"time"
-	"strconv"
 	"os"
+	"strconv"
+	"time"
 )
 
 /**
 Query cloudwatch log with
 See doc:
-see aws https://docs.aws.amazon.com/sdk-for-go/api/
+see https://docs.aws.amazon.com/sdk-for-go/api/service/cloudwatchlogs/
 
 https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/CWL_QuerySyntax.html
 
@@ -108,7 +108,7 @@ func main() {
 		getQueryResultsOutput, err := cwLogs.GetQueryResults(&getQueryResultsInput)
 
 		log.Printf(">>>>>> GetQueryResults= %d records, stats=%s, status=%s\n", len(getQueryResultsOutput.Results),
-			ToString(getQueryResultsOutput.Statistics),  *getQueryResultsOutput.Status)
+			ToString(getQueryResultsOutput.Statistics), *getQueryResultsOutput.Status)
 		fmt.Println("----------------")
 		if err != nil {
 			log.Printf("GetQueryResults got err=%v\n", err)
@@ -116,6 +116,11 @@ func main() {
 		} else {
 
 			switch *getQueryResultsOutput.Status {
+			case "Running":
+				// just ignored..
+				continue
+			case "Failed":
+				fallthrough
 			case "Complete":
 				done = true
 				fallthrough
@@ -228,7 +233,7 @@ func parseArguments() (input cloudwatchlogs.StartQueryInput, region string) {
 	}
 
 	var err error
-	if argEndTime!="" {
+	if argEndTime != "" {
 		endTime, err = strconv.Atoi(argEndTime)
 		if err != nil {
 			endTime = int(getTimestampFromRFC3339(argEndTime))
@@ -239,7 +244,7 @@ func parseArguments() (input cloudwatchlogs.StartQueryInput, region string) {
 		endTime = int(time.Now().Unix())
 	}
 
-	if argStartTime!="" {
+	if argStartTime != "" {
 		startTime, err = strconv.Atoi(argStartTime)
 		if err != nil {
 			startTime = int(getTimestampFromRFC3339(argStartTime))
