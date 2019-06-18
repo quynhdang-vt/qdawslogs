@@ -103,7 +103,8 @@ func main() {
 
 	done := false
 	for !done {
-		time.Sleep(5 * time.Second)
+		log.Printf("... Waiting to retrieve results... \n")
+		time.Sleep(10 * time.Second)
 		getQueryResultsOutput, err := cwLogs.GetQueryResults(&getQueryResultsInput)
 
 		log.Printf(">>>>>> GetQueryResults= %d records, stats=%s, status=%s\n", len(getQueryResultsOutput.Results),
