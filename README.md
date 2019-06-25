@@ -104,3 +104,19 @@ OR
 ### Sample outputs
 
 See https://github.com/quynhdang-vt/qdawslogs/tree/master/samples for the above sample outputs
+
+### Helpful scripts
+
+#### tasklog.sh
+
+Use this tool to query CW for messages related to a job/task for an ECS env, e.g. `dev`, `stage`, or `prod`.
+
+For example:
+To get log messages that have the taskId / jobId in the message from a given startTime (hint: use graphql to query for the createdDateTime` -- you can have it either as a UTC string format or epoch
+
+```
+ENV=dev ./tasklog.sh 19062625_v0BTnn4F0Z 1561480000
+```
+
+
+```
