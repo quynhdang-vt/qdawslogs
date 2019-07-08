@@ -118,5 +118,11 @@ To get log messages that have the taskId / jobId in the message from a given sta
 ENV=dev ./tasklog.sh 19062625_v0BTnn4F0Z 1561480000
 ```
 
+#### Getting logstream of an engine sample:
+
+For Face Detection on Stage -- the logStream can be found in the taskLog script above.
 
 ```
+./qdawslogs -logGroupName /aws/ecs/stage-rt -startTime 1562580145 -filter "@logStream like /FaceDetectionEV2F_E/" -filter "@logStream like /4b5234ef-437d-410f-a1ae-4ef26bac1db3/" > /tmp/19072808_UVMJrAX7UTORD0Q-logstream.txt 2>&1
+```
+
