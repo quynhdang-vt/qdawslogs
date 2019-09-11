@@ -1,3 +1,12 @@
+# Usage
+#
+# ENV={stage,prod} ./tasklog.sh {TASK_ID} {createdDateTime}
+#
+# Default ENV is prod.
+#
+# Note that this uses the default AWS Credentials
+# TO specify a different profile, set the AWS_PROFILE environment variable
+#
 TASK_ID=$1
 START_TIME=$2
 if [ -z $ENV ]; then
