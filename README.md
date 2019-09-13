@@ -6,15 +6,14 @@ This CLI tool is similar to Cloudwatch Insights by submitting queries to Cloudwa
 
 ## Building
 
-There is a ready built [Mac version](https://github.com/quynhdang-vt/qdawslogs/blob/master/qdawslogs.mac) but you can clone the repo,
-following GO convention.
+Make sure you have Go, make then just 
 
 ```
-go get github.com/quynhdang-vt/qdawslogs
-go get -u github.com/aws/aws-sdk-go
-cd $GOPATH/src/github.com/quynhdang-vt/qdawslogs
-go build -o qdawslogs
+make build
 ```
+
+Depending on your env, it will go to either osx or linux.
+Note that I have pre-built both versions and checked in here.
 
 
 ## Running
@@ -91,14 +90,14 @@ The output can then be piped to a file, e.g.
 OR
 
 ```
-./qdawslogs.mac -startTime "2019-06-12T06:47:12.000Z" -messageFilter 19062412_5Xi2eYcEc6 > samples/all=19062412_5Xi2eYcEc6.log 2>&1
+./qdawslogs -startTime "2019-06-12T06:47:12.000Z" -messageFilter 19062412_5Xi2eYcEc6 > samples/all=19062412_5Xi2eYcEc6.log 2>&1
 ```
 
 
 OR
 
 ```
-./qdawslogs.mac -startTime "2019-06-12T06:47:12.000Z" -messageFilter 19062412_5Xi2eYcEc6 -filter "@logStream like /DeepAffects/" > samples/DeepAffects-19062412_5Xi2eYcEc6.log 2>&1
+./qdawslogs -startTime "2019-06-12T06:47:12.000Z" -messageFilter 19062412_5Xi2eYcEc6 -filter "@logStream like /DeepAffects/" > samples/DeepAffects-19062412_5Xi2eYcEc6.log 2>&1
 ```
 
 ### Sample outputs
