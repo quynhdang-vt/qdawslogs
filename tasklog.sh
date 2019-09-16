@@ -17,7 +17,7 @@ fi
 
 echo "Running CW query .. will pipe to ${FILENAME}"
 set -x
-${CMD} -logGroupName ${LOGGROUP} -messageFilter $TASK_ID -startTime "$START_TIME" > ${FILENAME} 2>&1
+${CMD} -logGroupName ${LOGGROUP} -limit 10000 -messageFilter $TASK_ID -startTime "$START_TIME" > ${FILENAME} 2>&1
 set +x
 cat ${FILENAME}
 
