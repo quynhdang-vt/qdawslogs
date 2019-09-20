@@ -1,18 +1,33 @@
 # Usage
 #
-# ENV={stage,prod} ./tasklog.sh {TASK_ID} {createdDateTime}
+# ENV={stage,prod,pmi} ./tasklog.sh {TASK_ID} {createdDateTime}
 #
 # Default ENV is prod.
 #
 # Note that this uses the default AWS Credentials
 # TO specify a different profile, set the AWS_PROFILE environment variable
 #
+#  To use ENV such as `pmi` which connects via assumed role, set up per https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-role.html, and set up the AWS_PROFILE when invoking the script.
+#
+# For example:
+#
+#  ENV=pmi AWS_PROFILE=veritone-pmi ./tasklog.sh 19093820_x8NDoSvdVB7G4oz "2019-09-20 07:15:18+00" 
+#
+
 TASK_ID=$1
 START_TIME=$2
 if [ -z $ENV ]; then
 	ENV="prod"
 fi
+
+
 LOGGROUP="/aws/ecs/$ENV-rt"
+## For other env will be different
+case "$ENV" in
+"pmi")
+      LOGGROUP="/aws/ecs/prod-pmi-edge"
+      ;;
+esac
 
 FILENAME=/tmp/${TASK_ID}.log
 #osx/qdawslogs -messageFilter $TASK_ID -startTime "$START_TIME" -filter "@logStream like /DeepAffects/" > /tmp/${TASK_ID}-DeepAffects.log 2>&1
@@ -26,7 +41,9 @@ fi
 
 echo "Running CW query .. will pipe to ${FILENAME}"
 set -x
-${CMD} -logGroupName ${LOGGROUP} -limit 10000 -messageFilter $TASK_ID -startTime "$START_TIME" > ${FILENAME} 2>&1
+# See https://docs.aws.amazon.com/sdk-for-go/api/ for the AWS_SDK_LOAD_CONFIG
+# too lazy to change thec code..
+AWS_SDK_LOAD_CONFIG=1 ${CMD} -logGroupName ${LOGGROUP} -limit 10000 -messageFilter $TASK_ID -startTime "$START_TIME" > ${FILENAME} 2>&1
 set +x
 cat ${FILENAME}
 
